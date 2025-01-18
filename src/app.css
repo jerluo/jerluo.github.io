@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+a {
+    text-decoration: none; /* Remove default underline */
+    color: rgb(168 162 158); /* Dark gray, close to black */
+    text-decoration-color: rgba(0, 0, 0, 0.2);
+    transition: color 0.3s ease, text-decoration 0.3s ease;
+}
+
+/* Add hover effect with a subtle color change */
+a:hover {
+    color: #000000; /* Pure black on hover */
+    text-decoration: underline;
+}

@@ -3,10 +3,9 @@
     import { onMount } from 'svelte';
 
     let scrollContainer: HTMLDivElement | null = null;
-    let topPadding: number = 0; // To store the calculated padding value
+    let topPadding: number = 0;
 
     onMount(() => {
-        // Disable scrolling on the entire body
         document.body.style.overflow = 'hidden';
 
         const handleScroll = () => {
@@ -26,15 +25,13 @@
         };
 
         if (scrollContainer) {
-            // Clone content for seamless looping
             const content = scrollContainer.querySelector('.scroll-content');
             if (content) {
                 const clone = content.cloneNode(true);
                 scrollContainer.appendChild(clone);
                 const contentDiv = document.getElementById('content-div');
                 if (contentDiv) {
-                    // Calculate the height of the div with id="content-div"
-                    topPadding = contentDiv.offsetHeight;
+                    topPadding = contentDiv.offsetHeight + 32; // 32 for image height
                 }
             }
 
@@ -60,20 +57,32 @@
         bind:this={scrollContainer}
     >
         <div class="scroll-content space-y-72">
-            {#each Array(4) as _, i}
+            {#each Array(3) as _, i}
                 <div id="content-div" class="space-y-8">
-                    <h1 class="text-4xl font-semibold">Jerry Luo</h1>
-                    <p class="text-lg text-gray-600 leading-relaxed">
+                    <div class="flex items-end justify-between space-x-8">
+                        <div>
+                            <h1 class="text-4xl font-semibold">Jerry Luo</h1>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <img
+                                src="/headshot.jpg" 
+                                alt="Jerry Luo"
+                                class="w-32 h-32 rounded-lg object-cover shadow-md ring-1 ring-gray-300"
+                            />
+                        </div>
+                    </div>
+                        
+                    <p class="text-md text-gray-600 leading-relaxed">
                         Hi there! I'm an undergraduate computer science and data science student at the 
                         University of Wisconsin-Madison, originally from Austin, TX. In the summers of 2023
                         and 2024, I had the privilege of working at CoBank and Capital One as a software engineer intern.
                     </p>
-                    <p class="text-lg text-gray-600 leading-relaxed">
+                    <p class="text-md text-gray-600 leading-relaxed">
                         Currently, I'm the president of the UW-Madison <a href="https://madison.dssdglobal.org/">hub</a> 
                         for Data Science for Sustainable Development, a non-profit creating software to support
                         sustainable development. I am also a peer mentor for CS 620 (Computer Science Capstone).
                     </p>
-                    <p class="text-lg text-gray-600 leading-relaxed">
+                    <p class="text-md text-gray-600 leading-relaxed">
                         I love listening to new  <a href="https://open.spotify.com/user/0ftl17afr94olbxdkzbk72vyi">music</a> 
                         and collecting <a href="https://www.discogs.com/user/jerrryluo/collection">records</a>. 
                         Some of my all time favorites include Frank Ocean's <i>Blonde</i> and Radiohead's <i>In Rainbows</i>. 
@@ -131,17 +140,5 @@
         left: 50%;
         transform: translateX(-50%);
         margin-bottom: 2rem;
-    }
-    
-    a {
-        text-decoration: none; /* Remove default underline */
-        color: #333333; /* Dark gray, close to black */
-        transition: color 0.3s ease, text-decoration 0.3s ease;
-    }
-
-    /* Add hover effect with a subtle color change */
-    a:hover {
-        color: #000000; /* Pure black on hover */
-        text-decoration: underline;
     }
 </style>
