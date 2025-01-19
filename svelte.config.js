@@ -6,9 +6,6 @@ const config = {
 		adapter: adapter({
 			fallback: '404.html'
 		}),
-		prerender: {
-			default: true
-		},
 		paths: {
 			base: process.argv.includes('dev') ? '' : process.env.BASE_PATH
 		}
