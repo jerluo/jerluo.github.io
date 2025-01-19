@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { Mail, Linkedin, Music, Github } from 'lucide-svelte';
     import { page } from '$app/stores';
     import '../app.css';
+
+    export const prerender = true;
   
     $: currentPath = $page.url.pathname;
   </script>
