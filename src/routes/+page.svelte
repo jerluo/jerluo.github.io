@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Mail, Linkedin, Github } from 'lucide-svelte';
+    import Icon from "@iconify/svelte";
     import { onMount } from 'svelte';
 
     let scrollContainer: HTMLDivElement | null = null;
@@ -53,7 +53,7 @@
 <div class="h-screen flex flex-col items-center">
     <!-- Infinite Scroll Container -->
     <div
-        class="relative w-full max-w-2xl overflow-hidden scroll-container flex-grow mb-16 space-y-72 pt-16"
+        class="relative w-full max-w-full overflow-hidden scroll-container flex-grow mb-16 space-y-72 pt-16"
         bind:this={scrollContainer}
     >
         <div class="scroll-content space-y-72">
@@ -99,19 +99,19 @@
             href="mailto:jerryluoaustin@gmail.com"
             class="text-gray-600 hover:text-gray-800 transition-colors"
         >
-            <Mail size={24} />
+            <Icon icon="bxl:gmail" height="24"/>
         </a>
         <a
             href="https://www.linkedin.com/in/jerrluo/"
             class="text-gray-600 hover:text-gray-800 transition-colors"
         >
-            <Linkedin size={24} />
+            <Icon icon="bxl:linkedin-square" height="24"/>
         </a>
         <a
             href="https://github.com/jerluo"
             class="text-gray-600 hover:text-gray-800 transition-colors"
         >
-            <Github size={24} />
+            <Icon icon="bxl:github" height="24"/>
         </a>
     </div>
 </div>

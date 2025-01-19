@@ -6,4 +6,8 @@
     });
 </script>
 
-<p>Redirecting to resume...</p>
+<div class="flex justify-center h-screen">
+    <p>
+        <a href="/resume.pdf">Click here</a> if you are not redirected.
+    </p>
+</div>
