@@ -4,6 +4,58 @@
 
     let scrollContainer: HTMLDivElement | null = null;
     let topPadding: number = 0;
+    let scrollTimeout: number | null = null;
+    let contentHeight: number = 0;
+    const SCROLL_THRESHOLD = 100; // Pixels from perfect center before auto-scrolling triggers
+    const SCROLL_DURATION = 2000; // Animation duration in milliseconds
+    const SCROLL_CENTER_TIME = 600;
+
+    function getClosestContentSection(scrollTop: number): number {
+        const sectionHeight = contentHeight + 288; // 288 is the space-y-72 class (72 * 4)
+        const currentSection = Math.round(scrollTop / sectionHeight);
+        return currentSection * sectionHeight;
+    }
+
+    function isCloseToCenter(currentScroll: number): boolean {
+        const targetScroll = getClosestContentSection(currentScroll);
+        return Math.abs(currentScroll - targetScroll) <= SCROLL_THRESHOLD;
+    }
+
+    function smoothScrollToContent() {
+        if (scrollContainer) {
+            const currentScroll = scrollContainer.scrollTop;
+            
+            // Only scroll if we're outside the threshold
+            if (!isCloseToCenter(currentScroll)) {
+                const targetScroll = getClosestContentSection(currentScroll);
+                
+                // Using scrollTo with custom duration
+                const startPosition = currentScroll;
+                const distance = targetScroll - startPosition;
+                const startTime = performance.now();
+
+                function animate(currentTime: number) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / SCROLL_DURATION, 1);
+                    
+                    // Easing function for smoother animation (thanks claude!)
+                    const easeInOutCubic = progress < 0.5
+                        ? 4 * progress * progress * progress
+                        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+                    if (scrollContainer) {
+                        scrollContainer.scrollTop = startPosition + (distance * easeInOutCubic);
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        }
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            }
+        }
+    }
 
     onMount(() => {
         document.body.style.overflow = 'hidden';
@@ -13,13 +65,21 @@
                 const scrollHeight = scrollContainer.scrollHeight;
                 const containerHeight = scrollContainer.offsetHeight;
 
-                // When the scroll reaches the bottom, jump to the top with padding
+                // Clear existing timeout
+                if (scrollTimeout) {
+                    window.clearTimeout(scrollTimeout);
+                }
+
+                // Set new timeout for centering
+                scrollTimeout = window.setTimeout(() => {
+                    smoothScrollToContent();
+                }, SCROLL_CENTER_TIME);
+
+                // Infinite scroll logic
                 if (scrollContainer.scrollTop >= scrollHeight - containerHeight) {
-                    scrollContainer.scrollTop = containerHeight + topPadding; // Jump to the top, keeping padding
-                } 
-                // When the scroll reaches the top, jump to the bottom
-                else if (scrollContainer.scrollTop <= 0) {
-                    scrollContainer.scrollTop = scrollHeight - containerHeight - topPadding; // Jump to the bottom
+                    scrollContainer.scrollTop = containerHeight + topPadding;
+                } else if (scrollContainer.scrollTop <= 0) {
+                    scrollContainer.scrollTop = scrollHeight - containerHeight - topPadding;
                 }
             }
         };
@@ -31,27 +91,26 @@
                 scrollContainer.appendChild(clone);
                 const contentDiv = document.getElementById('content-div');
                 if (contentDiv) {
-                    topPadding = contentDiv.offsetHeight + 32; // 32 for image height
+                    contentHeight = contentDiv.offsetHeight;
+                    topPadding = contentHeight + 32;
                 }
             }
 
-            // Attach scroll event listener
             scrollContainer.addEventListener('scroll', handleScroll);
-
-            // Set initial scroll position to avoid jump
             scrollContainer.scrollTop = 1;
         }
 
         return () => {
-            // Clean up
-            document.body.style.overflow = 'auto'; // Restore body scroll behavior
+            if (scrollTimeout) {
+                window.clearTimeout(scrollTimeout);
+            }
+            document.body.style.overflow = 'auto';
             scrollContainer?.removeEventListener('scroll', handleScroll);
         };
     });
 </script>
 
 <div class="h-screen flex flex-col items-center">
-    <!-- Infinite Scroll Container -->
     <div
         class="relative w-full max-w-full overflow-hidden scroll-container flex-grow mb-16 space-y-72 pt-16"
         bind:this={scrollContainer}
@@ -93,7 +152,6 @@
         </div>
     </div>
 
-    <!-- Social Links -->
     <div class="bottom-icons fixed bottom-0 left-1/2 transform -translate-x-1/2 flex justify-center space-x-8 mt-8 mb-8">
         <a
             href="mailto:jerryluoaustin@gmail.com"
@@ -120,14 +178,14 @@
     .scroll-container {
         position: relative;
         overflow-y: scroll;
-        -ms-overflow-style: none; /* Hide scrollbar for IE */
-        scrollbar-width: none; /* Hide scrollbar for Firefox */
-        overscroll-behavior: contain; /* Prevent bounce */
-        flex-grow: 1; /* Allow the container to grow */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        overscroll-behavior: contain;
+        flex-grow: 1;
     }
 
     .scroll-container::-webkit-scrollbar {
-        display: none; /* Hide scrollbar for WebKit */
+        display: none;
     }
 
     .scroll-content > * {
@@ -136,7 +194,7 @@
 
     .bottom-icons {
         position: fixed;
-        bottom: 2rem; /* Adjust as necessary for padding */
+        bottom: 2rem;
         left: 50%;
         transform: translateX(-50%);
         margin-bottom: 2rem;
