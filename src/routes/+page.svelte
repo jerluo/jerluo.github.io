@@ -8,7 +8,7 @@
     let contentHeight: number = 0;
     const SCROLL_THRESHOLD = 100; // Pixels from perfect center before auto-scrolling triggers
     const SCROLL_DURATION = 2000; // Animation duration in milliseconds
-    const SCROLL_CENTER_TIME = 600;
+    const SCROLL_CENTER_TIME = 600; // Time to wait after user stops scrolling to auto-scroll
 
     function getClosestContentSection(scrollTop: number): number {
         const sectionHeight = contentHeight + 288; // 288 is the space-y-72 class (72 * 4)
@@ -143,9 +143,9 @@
                     </p>
                     <p class="text-md text-gray-600 leading-relaxed">
                         I love listening to new  <a href="https://open.spotify.com/user/0ftl17afr94olbxdkzbk72vyi">music</a> 
-                        and collecting <a href="https://www.discogs.com/user/jerrryluo/collection">records</a>. 
+                        and dabble in collecting <a href="https://www.discogs.com/user/jerrryluo/collection">records</a>. 
                         Some of my all time favorites include Frank Ocean's <i>Blonde</i> and Radiohead's <i>In Rainbows</i>. 
-                        I also love trying new restaurants. Add me on beli <a href="https://beliapp.co/app/jerluo">@jerluo</a>  
+                        I also love trying new restaurants<span>&#8212;</span>you can find me on beli <a href="https://beliapp.co/app/jerluo">@jerluo</a>  
                     </p>
                 </div>
             {/each}
