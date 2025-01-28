@@ -6,12 +6,13 @@
     let topPadding: number = 0;
     let scrollTimeout: number | null = null;
     let contentHeight: number = 0;
+    let spacing: number = 0;
     const SCROLL_THRESHOLD = 100; // Pixels from perfect center before auto-scrolling triggers
     const SCROLL_DURATION = 2000; // Animation duration in milliseconds
-    const SCROLL_CENTER_TIME = 600; // Time to wait after user stops scrolling to auto-scroll
+    const SCROLL_CENTER_TIME = 1000; // Time to wait after user stops scrolling to auto-scroll
 
     function getClosestContentSection(scrollTop: number): number {
-        const sectionHeight = contentHeight + 288; // 288 is the space-y-72 class (72 * 4)
+        const sectionHeight = contentHeight + spacing; // 288 is the space-y-72 class (72 * 4)
         const currentSection = Math.round(scrollTop / sectionHeight);
         return currentSection * sectionHeight;
     }
@@ -59,6 +60,7 @@
 
     onMount(() => {
         document.body.style.overflow = 'hidden';
+        spacing = window.matchMedia('(min-width: 1536px)').matches ? 800 : 384;
 
         const handleScroll = () => {
             if (scrollContainer) {
@@ -72,14 +74,16 @@
 
                 // Set new timeout for centering
                 scrollTimeout = window.setTimeout(() => {
-                    smoothScrollToContent();
+                    if (window.innerWidth > 640) {
+                        smoothScrollToContent();
+                    }
                 }, SCROLL_CENTER_TIME);
 
                 // Infinite scroll logic
                 if (scrollContainer.scrollTop >= scrollHeight - containerHeight) {
                     scrollContainer.scrollTop = containerHeight + topPadding;
                 } else if (scrollContainer.scrollTop <= 0) {
-                    scrollContainer.scrollTop = scrollHeight - containerHeight - topPadding;
+                    scrollContainer.scrollTop = 0//scrollHeight - containerHeight - topPadding;
                 }
             }
         };
@@ -92,7 +96,7 @@
                 const contentDiv = document.getElementById('content-div');
                 if (contentDiv) {
                     contentHeight = contentDiv.offsetHeight;
-                    topPadding = contentHeight + 32;
+                    topPadding = contentHeight + 64;
                 }
             }
 
@@ -112,10 +116,10 @@
 
 <div class="h-screen flex flex-col items-center">
     <div
-        class="relative w-full max-w-full overflow-hidden scroll-container flex-grow mb-16 space-y-72 pt-16"
+        class="relative w-full max-w-full overflow-hidden scroll-container flex-grow mb-16 space-y-[386px] 2xl:space-y-[800px] pt-16"
         bind:this={scrollContainer}
     >
-        <div class="scroll-content space-y-72">
+        <div class="scroll-content space-y-[386px] 2xl:space-y-[800px]">
             {#each Array(3) as _, i}
                 <div id="content-div" class="space-y-8">
                     <div class="flex items-end justify-between space-x-8">
