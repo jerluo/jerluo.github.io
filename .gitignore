@@ -24,3 +24,6 @@ vite.config.ts.timestamp-*
 
 # personal trip-plan exports — never commit real saves
 trip/sea-trip-plan.json
+
+# personal trip-plan exports — never commit real saves
+static/trip/sea-trip-plan.json
