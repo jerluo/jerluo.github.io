@@ -138,6 +138,10 @@ footer{margin-top:40px;font-size:12.5px;color:var(--ink-faint);border-top:1px so
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important;}
 }
+.updbanner{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;justify-content:space-between;background:var(--warn-soft);border:1px solid var(--warn);border-radius:10px;padding:12px 14px;margin:0 0 18px;font-size:13px;color:var(--warn);line-height:1.45;}
+.updbanner .ub-actions{display:flex;gap:8px;flex-shrink:0;}
+.updbanner button{background:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:7px 14px;font-family:'Public Sans',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.updbanner button.ghost{background:none;color:var(--warn);}
 </style>
 </head>
 <body>
@@ -225,15 +229,20 @@ footer{margin-top:40px;font-size:12.5px;color:var(--ink-faint);border-top:1px so
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const START = new Date(2026,7,10);
-const BUDGET = 42;
+// START / BUDGET / original are the *base itinerary*. The authoritative source
+// is itinerary.json (fetched at load); the inline values below are only a
+// last-resort offline fallback for a fresh install with no network and no
+// cache. Normally you edit itinerary.json — not this file — for the schedule.
+let BASE_VERSION = 1;
+let START = new Date(2026,7,10);
+let BUDGET = 42;
 const STORE_KEY = "sea-trip-plan-v2";
 const HEX = {vn:"#0F6E56",la:"#534AB7",th:"#C24E24"};
 const SOFT = {vn:"var(--vn-soft)",la:"var(--la-soft)",th:"var(--th-soft)"};
 const C = {vn:{name:"Vietnam",main:"var(--vn)",mid:"var(--vn-mid)"},la:{name:"Laos",main:"var(--la)",mid:"var(--la-mid)"},th:{name:"Thailand",main:"var(--th)",mid:"var(--th-mid)"}};
 const MODES = {bus:"Bus",train:"Train",boat:"Boat",fly:"Flight",other:"Other"};
 const DFIELDS = [["acc","Accommodation","Hostel/hotel name, booking ref, address…"],["tours","Tours","Ha Giang loop operator, Hang En trek, slow-boat tickets…"],["todo","Things to do","Viewpoints, food to try, bars, day trips…"],["note","Notes","Anything else"]];
-const original = [
+let original = [
  {name:"Hanoi",c:"vn",n:3,note:"Old Quarter; Lao embassy visa run on day 2",lat:21.0285,lng:105.8542},
  {leg:"2.5h",mode:"train"},
  {name:"Ninh Binh",c:"vn",n:2,note:"Trang An boat, Mua Cave viewpoint",lat:20.2506,lng:105.9745},
@@ -274,6 +283,9 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const validPlan = p => Array.isArray(p) && p.length > 0 && p.every(x =>
   (typeof x.leg === "string") ||
   (x.name && typeof x.n === "number" && typeof x.lat === "number" && typeof x.lng === "number" && HEX[x.c]));
+const BASE_CACHE_KEY = "sea-trip-base-v2"; // caches last-fetched itinerary.json for offline
+const BASE_VER_KEY = "sea-trip-basever";   // base version the saved plan is aligned to
+const hadSavedPlan = !!loadSaved();
 let saved = loadSaved() || clone(original);
 let plan = clone(saved);
 let selectedStop = null;
@@ -661,7 +673,68 @@ function drawMap(){
   if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.08));
   mapDirty = false;
 }
-render();
+
+// ---- Base itinerary loading (itinerary.json is the source of truth) ----
+function applyBase(b){
+  if(!b || !Array.isArray(b.stops) || !validPlan(b.stops)) return false;
+  original = b.stops;
+  if(typeof b.version === "number") BASE_VERSION = b.version;
+  if(typeof b.budget === "number") BUDGET = b.budget;
+  if(typeof b.start === "string"){
+    const [y,m,d] = b.start.split("-").map(Number);
+    if(y && m && d) START = new Date(y, m-1, d);
+  }
+  return true;
+}
+async function fetchBase(){
+  try{
+    const res = await fetch("itinerary.json", {cache:"no-store"});
+    if(!res.ok) throw new Error("http "+res.status);
+    const b = await res.json();
+    if(applyBase(b)){
+      try{ localStorage.setItem(BASE_CACHE_KEY, JSON.stringify(b)); }catch(e){}
+      return;
+    }
+  }catch(e){
+    try{ if(applyBase(JSON.parse(localStorage.getItem(BASE_CACHE_KEY)))) return; }catch(e2){}
+  }
+  // fell through: keep the inline offline fallback already in `original`
+}
+function recordBaseVersion(){ try{ localStorage.setItem(BASE_VER_KEY, String(BASE_VERSION)); }catch(e){} }
+function maybeOfferUpdate(){
+  const seen = parseInt(localStorage.getItem(BASE_VER_KEY));
+  if(isNaN(seen)){ recordBaseVersion(); return; } // pre-versioning saved plan: adopt silently, don't nag
+  if(BASE_VERSION > seen) showUpdateBanner();
+}
+function showUpdateBanner(){
+  if(document.getElementById("updbanner")) return;
+  const host = document.getElementById("route");
+  if(!host) return;
+  const div = document.createElement("div");
+  div.id = "updbanner";
+  div.className = "updbanner";
+  div.innerHTML = `<span>Base itinerary updated (v${BASE_VERSION}). Loading it replaces your current plan &mdash; Export first if you want to keep it.</span>`
+    + `<span class="ub-actions"><button onclick="loadNewBase()">Load</button><button class="ghost" onclick="dismissUpdate()">Keep mine</button></span>`;
+  host.parentNode.insertBefore(div, host);
+}
+function removeBanner(){ const b = document.getElementById("updbanner"); if(b) b.remove(); }
+function loadNewBase(){
+  cancelPick(); selectedStop = null;
+  plan = clone(original); saved = clone(original);
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(saved)); }catch(e){}
+  recordBaseVersion(); removeBanner(); render(); flash("Loaded updated itinerary");
+}
+function dismissUpdate(){ recordBaseVersion(); removeBanner(); }
+async function init(){
+  render();            // instant paint from saved plan or inline fallback
+  await fetchBase();   // pull authoritative base (or offline cache)
+  if(!hadSavedPlan){   // no personal plan yet — adopt the base as-is
+    saved = clone(original); plan = clone(original); recordBaseVersion(); render(); return;
+  }
+  render();            // reflect any start/budget change from the new base
+  maybeOfferUpdate();  // offer to pull a newer base over the saved plan
+}
+init();
 </script>
 </body>
 </html>

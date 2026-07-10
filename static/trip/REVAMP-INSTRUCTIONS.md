@@ -4,6 +4,26 @@ You've been given `sea-trip-schedule.html` (a self-contained trip planner) and p
 a `sea-trip-plan.json` (an exported save). The user wants to revamp the plan through you
 rather than through the UI. Here's everything you need.
 
+## Source of truth: `itinerary.json` (read this first)
+
+The **base itinerary now lives in `itinerary.json`** next to `index.html`, not in the
+HTML. To make large-scale schedule changes, edit that file — do NOT hand-edit the stop
+array in `index.html` (the inline copy there is only an offline fallback).
+
+`itinerary.json` shape:
+```json
+{ "version": 1, "start": "YYYY-MM-DD", "budget": 42, "stops": [ STOP, LEG, STOP, ... ] }
+```
+- `stops` follows the exact flat stop/leg format documented below.
+- `start` is the trip start date (local), `budget` the target total nights.
+- **Bump `version` by 1 whenever you change the itinerary.** On next open, a phone that
+  already has a saved plan shows a "Base itinerary updated — Load / Keep mine" banner.
+  "Load" replaces the saved plan with the new base; "Keep mine" keeps the user's edits.
+  Without a version bump, existing saved plans on-device will NOT pick up your changes.
+
+The app fetches `itinerary.json` at load (caching it for offline use). The `START`,
+`BUDGET`, and inline `original` array in `index.html` are just the no-network fallback.
+
 ## The data format
 
 The plan is ONE flat JSON array that strictly alternates stop and leg objects:
